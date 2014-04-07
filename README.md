@@ -3,7 +3,7 @@ concurrencetopology
 
 "Concurrence topology" is a method for describing high-order statistical dependence among binary variables.
 
-The software described here was used for the computations described in the paper "Describing high-order statistical dependence using 'Concurrence Topology', with application to functional MRI brain data" by Ellis and Klein (2013).
+The software described here was used for the computations described in the paper "Describing high-order statistical dependence using 'Concurrence Topology', with application to functional MRI brain data" by Ellis and Klein (2014).
 
 Please see the website http://binarybottle.com/concurrencetopology/ for more information and supplementary materials.
 
