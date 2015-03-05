@@ -1,0 +1,206 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Concurrence Topology</title>
+<meta name="description" content="Concurrence topology website">
+<meta name="keywords" content="concurrence topology">
+<meta http-equiv="Content-language" content="en">
+<meta name="author" content="mailto:arno&#64;binarybottle.com">
+<meta name="dc.title" content="Concurrence topology"> 
+<meta name="dc.creator.address" content="arno&#64;binarybottle.com">
+<meta name="dc.subject" content="concurrence topology">
+<meta name="dc.type" content="text.homepage.personal"> 
+<meta name="dc.format" content="text/html"> 
+<meta name="dc.identifier" content="http://binarybottle.com/concurrencetopology/index.php"> 
+<link rel="stylesheet" type="text/css" href="http://binarybottle.com/concurrencetopology/style.css" />
+<script language="JavaScript">
+// Idea by:  Nic Wolfe (Nic@TimelapseProductions.com)
+// Web URL:  http://fineline.xs.mw
+// http://javascript.internet.com/generators/popup-window.html
+function popup(mylink, windowname)                   
+{
+   if (! window.focus)return true;
+      var href;
+      if (typeof(mylink) == 'string')
+         href=mylink;
+      else
+         href=mylink.href;
+         window.open(href, windowname, 'toolbar=1,statusbar=1,menubar=1,scrollbars=1,location=1,width=900,height=900,left=20,right=20,resizable=1'); 
+         return false;
+}
+<!-- Idea by:  Nic Wolfe (Nic@TimelapseProductions.com) -->
+<!-- Web URL:  http://fineline.xs.mw -->
+<!-- http://javascript.internet.com/generators/popup-window.html -->
+<!-- Begin
+function popUp(URL) {
+   day = new Date();
+   id  = day.getTime();
+   eval("page" + id + " = window.open(URL, '" + id + "', 'scrollbars=1,resizable=1,width=820,height=700,left = 200,top = 100');");
+}
+function popUpFull(URL) {
+   day = new Date();
+   id  = day.getTime();
+   eval("page" + id + " = window.open(URL, '" + id + "', 'toolbar=1,scrollbars=1,location=1,statusbar=1,menubar=1,resizable=1,width=820,height=800,left = 200,top = 100');");
+}
+// End -->
+</script>
+</head>
+
+
+<div class="banner">
+
+  <!--A HREF="#" onmouseover="Select_HOME();">
+    <img src="images/IbrainCT_logo.jpg" border="0" id="BrainCT" name="Concurrence Topology">
+  </A-->
+
+  <span class="banner_subtitle">
+  <img src="images/fmri_concurrences_small.png" style="width:330px">
+  <br />
+  <span class="title">Concurrence Topology</span>
+  <br />
+  <img src="images/simplicial_complex_small.png" style="width:330px">
+  </span>
+
+</div>
+
+
+//
+// @rno klein, 2013
+?>
+
+<title>Concurrence Topology</title>
+
+<div class="main">
+
+<br />
+<br />
+<br />
+<br />
+
+<div class="indent20">
+
+"Concurrence topology" is a new nonparametric method for describing high-order
+<br />
+statistical dependence among up to dozens of binary variables.
+<br />
+<br />
+This website provides supplementary material for the accepted article:
+<br />
+<br />
+<b>&quot;Describing high-order statistical dependence using &apos;Concurrence Topology&apos;, 
+<br />
+with application to functional MRI brain data&quot;</b>. 2014.
+<span class="xsmalltext">Steven P. Ellis and Arno Klein.</span>
+<br />
+<br />
+A 2012 preprint exists on <a href="http://arxiv.org/abs/1212.1642">arXiv:1212.1642</a>
+<br />
+<!--br />
+<&nbsp;&nbsp;
+[<a href="./evaluation_NeuroImage2009/Evaluation_Klein_NeuroImage2009.pdf" onClick="return popup(this,'pdf')">PDF</a>]       
+
+<br /-->
+
+<br />
+<hr width="90%" align=left> 
+Software (in R):
+<br />
+<span class="small_font">
+<span class="indent20">
+Posted on StatLib under the name &quot;ConcurrenceTopology&quot;:
+<a href="http://lib.stat.cmu.edu/">http://lib.stat.cmu.edu/</a>
+<br />
+and on Github: 
+<a href="https://github.com/binarybottle/concurrencetopology">https://github.com/binarybottle/concurrencetopology</a>
+<br />
+</span>
+</span>
+
+<br />
+<hr width="90%" align=left> 
+Documents:
+<br />
+<span class="small_font">
+<span class="indent20">
+Guide to use of the software:
+<a href="supplement2014/docs/SoftwareHowTo.txt">SoftwareHowTo.txt</a>
+(<a href="supplement2014/images/filtration_yh52.png">fig1</a>,
+<a href="supplement2014/images/augmented_toy_filtrations.png">fig2</a>)
+</span>
+</span>
+<br />
+
+<span class="small_font">
+<span class="indent20">
+Some mathematical theory underlying the software:
+<a href="supplement2014/docs/ComputationalHomologyNotes.pdf">ComputationalHomologyNotes.pdf</a>
+</span>
+</span>
+<br />
+
+<span class="small_font">
+<span class="indent20">
+Some topics not included in the article:
+<a href="supplement2014/docs/Background.pdf">Background.pdf</a>
+</span>
+</span>
+<br />
+<br />
+
+<a href="supplement2014/images/filtration_yh52.png">
+<img src="supplement2014/images/filtration_yh52_small.png">
+</a>
+<br />
+
+<hr width="90%" align=left> 
+Data:
+<br />
+<span class="small_font">
+<span class="indent20">
+Supplemental examples in an R file:
+<a href="supplement2014/data/TestPatterns.RData">TestPatterns.RData</a>
+</span>
+</span>
+<br />
+
+<span class="small_font">
+<span class="indent20">
+fMRI demographic (+diagnosis) and BOLD data plus documentation:
+<a href="supplement2014/data/fmri.tar.gz">fmri.tar.gz</a>
+</span>
+</span>
+<br />
+
+<span class="small_font">
+<span class="indent20">
+Some results:
+<a href="supplement2014/data/results.tar.gz">results.tar.gz</a>
+</span>
+</span>
+<br />
+
+<br />
+<hr width="90%" align=left> 
+<br />
+
+</div>
+</div>
+</div>
+
+<br />
+<br />
+
+<!-- Google Analytics -->
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-693862-2");
+pageTracker._trackPageview();
+} catch(err) {}
+</script>
+
+</body>
+</html>

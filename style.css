@@ -1,0 +1,82 @@
+body {
+        background-color: #FFFFFF; //#FCFCFC; //#FFFFF0;
+        font-family: Syntax, Georgia, Arial, Times;
+        font-size: 95%;
+        color: #525252; //#747C7E; //#996633;
+}
+
+div.banner {
+        position: absolute;
+	left:   20px;
+	top:    20px;
+        width: 500px;
+  }
+  .banner_subtitle {
+        position: absolute;
+	top:     0px;
+	left:    140px;
+        font-size: 220%;
+  }
+
+span.title {
+        font-family: Myriad, Syntax, Georgia, Arial, Times;
+}
+span.citation {
+        font-family: Myriad, Syntax, Georgia, Arial, Times;
+        font-size: 80%;
+}
+
+div.main {
+        position: absolute;
+	left:     100px;
+	top:      100px;
+	width: 700px;
+        line-height: 15pt;
+}
+
+.url {
+        font-size: 90%;        
+}
+.doc {
+        font-size: 90%;        
+}
+div.description {
+        font-family: Georgia, Arial, Verdana, Times New Roman, Helvetica, sans-serif;
+        font-size: 95%;        
+}
+div.caption {
+        font-family: Georgia, Arial, Verdana, Times New Roman, Helvetica, sans-serif;
+        font-size: 95%;        
+}
+
+div.footer {
+        position: relative;
+	left:   50px;
+	top:    100px;
+	font-size: 80%;
+	color: #9C957C;
+}
+
+img {
+        border-color: #777777; //#747C7E;
+}
+a:link {
+	color: #CC0000;
+	text-decoration:none;
+}
+a:visited {
+	color: #CC3333;
+	text-decoration:none;
+}
+a:hover {
+	color: #FF0000;
+	text-decoration:none;
+}
+a:active {
+	color: #FF9933;
+	text-decoration:none;
+}
+
+.small_font {
+        font-size: 80%;
+}

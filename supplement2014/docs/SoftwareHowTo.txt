@@ -1,0 +1,894 @@
+(3/15/'13)
+
+This document serves as supplementary material for the article:
+ "Describing high-order statistical dependence using 'concurrence topology',
+  with application to functional MRI data" by Ellis and Klein (2013). 
+The document explains how to use the "ConcurrenceTopology" software written 
+by S.P. Ellis.
+
+
+-----------------------------------------------------------------------------
+             HOW TO USE "ConcurrenceTopology" TOPOLOGY SOFTWARE
+-----------------------------------------------------------------------------
+
+
+	       	   Table of contents.
+
+0. LICENSE
+1. INTRO
+2. DATA STRUCTURES
+3. PERSISTENT HOMOLOGY AND LOCALIZATION OF 'yh52'
+4. STARTING WITH A CONCURRENCE LIST
+5. USING 'complexToPersist' FOR PRODUCTION WORK
+6. A PRODUCTION RUN WITH REAL fMRI DATA
+
+
+-----------------------------------------------------------------------------
+0. LICENSE
+-----------------------------------------------------------------------------
+ConcurrenceTopology software is licensed under the Apache v2.0 license:
+http://www.apache.org/licenses/LICENSE-2.0
+
+All documentation is licensed under a Creative Commons Attribution 3.0 License:
+http://creativecommons.org/licenses/by/3.0/
+
+We have chosen the Apache v2.0 license because it is liberal and supports
+broad use and modification of the software. The Apache license allows other
+projects with virtually any license, including GPL, to use our code,
+and makes it more likely that we will attract support from companies,
+including open-source software companies.
+
+
+-----------------------------------------------------------------------------
+1. INTRODUCTION
+-----------------------------------------------------------------------------
+
+We explain via examples how to use the R (R Development Core Team, 2009, 
+"R: A Language and Environment for Statistical Computing") code used for 
+the calculations in the paper "Describing high-order statistical dependence 
+using 'Concurrence Topology', with application to functional MRI brain data".
+The file "SomeBackground.pdf" provides background material for the software 
+and a description of how it works. The relevant mathematical theory can be 
+found in "ConcurrenceTopol_Notes.pdf".
+
+R is available by free download from CRAN: http://cran.r-project.org/.
+
+To start an R session double click on "ConcurrenceTopology.RData". This will
+make available the ConcurrenceTopology code and a few small examples. (We did
+all computing on Macs. The following should work for any UNIX system, 
+probably Linux, too. It apparently works in Windows.)
+
+Alternatively, start R by entering "R" at a terminal command line and attach 
+the software and examples. (This is assuming you're running R in the same 
+directory where "ConcurrenceTopology.RData" is found. If it's not, put in the
+appropriate path.)
+
+attach("ConcurrenceTopology.RData") 
+
+Text following "#" is a comment. We use it for comments, but also for output.
+That way anything below can be directly pasted into an R session.
+
+#---------------------------------------------------------------------------
+# 2. DATA STRUCTURES
+#---------------------------------------------------------------------------
+
+# "ConcurrenceTopology.RData" includes several "toy" objects that can be used for testing or practice using the software. These include: 'yh52' (a filtered simplicial complex), 'bauble2' (a data set), 'OfficeBuilding' (filtered complex), 'Torus' (simplicial complex or concurrence list), 'yh727' (a filtered complex with two frames; the first is a cylinder and the second is an octagon), and 'TorusKlein3sphere' (simplicial complex; disjoint union of a torus, Klein bottle, and a three-dimensional sphere). 
+# (More small "test patterns" can be found in the file "TestPatterns.RData" in this directory.)
+
+# Let's try the filtered complex 'yh52'. (The name has no special significance.) First, we display 'yh52'.
+
+yh52
+
+# (If you want to follow our convention and "comment out" output, an easy way to do this is the following.)
+
+lbsr(yh52)
+
+# See the figure "filtration_yh52.pdf" for a graphical depiction of 'yh52'. 
+
+# A simplicial complex is represented by a list of vectors. The vectors consist of vertices, each named. Each vector consists of vertices of a simplex. (The complex implicitly includes all faces (nonempty subsets) of the simplices (vectors).)  A filtered simplicial complex, or filtration, is a list of simplicial complexes. Our convention is to name the complexes in the the filtration by consecutive numbers denoting frequency level: "1", "2", ... Thus, the complex ("frame" of the filtration) at frequency level "2" is:
+
+yh52[["2"]]
+
+# The names order the complexes in the filtration in decreasing order. Thus, e.g., every simplex in 'yh52[["4"]]' is either in 'yh52[["3"]]' or is a face (subset) of a simplex in 'yh52[["3"]]'.
+# (A "concurrence list" is represented in the same way as a simplicial complex, but the interpretation is different. In a concurrence list, the constituent vectors represent concurrences, so the atoms in the vectors denote variables.  A simplicial complex is interpreted as a set, so repetitions of vectors don't matter. But in a concurrence list multiplicity of concurrences are important. In neither a simplicial complex nor in a concurrence list is the order of vectors important.)
+
+# As remarked above, CONTRARY TO STANDARD PRACTICE IN COMPUTATIONAL HOMOLOGY (Edelsbrunner and Harer, 2010, "Computational Topology:  An Introduction"), IN THIS SYSTEM FILTRATIONS *DECREASE* WITH INCREASING INDEX ("frequency level"). I.e., it is possible for the complexes in succeeding frequency levels to be identical, but higher frequency levels cannot include simplices not already present in lower frequency levels.
+
+# As an example we construct a simplicial complex (or concurrence list) that represents two empty triangles sharing a side.
+
+yy <-  list(c(1,2), c(2,3), c(1,3), c(3,4), c(1,4))
+
+# Make it a standard practice to name the vertices. (Or variables in a concurrence list. But in the standard statistical application of ConcurrenceTopology the vertices will themselves represent variables.) Any (unique) names will do, but a simple solution is to let the vertices/variables can be their own names:
+
+yy <- selfNameComplex(yy) 
+
+# Take a look:
+
+yy
+
+# You don't have to use numbers to stand for vertices or variables. Here's the same complex, but with letters instead of numbers.
+
+yy <-  list(letters[c(1,2)], letters[c(2,3)], letters[c(1,3)], letters[c(3,4)], letters[c(1,4)])
+
+# Name vertices.
+
+yy <- selfNameComplex(yy)
+
+yy
+
+# Consider a subcomplex that includes only one of the triangles.
+
+zz <-  list(letters[c(1,2)], letters[c(2,3)], letters[c(1,3)])
+
+# Name the vertices:
+
+zz <- selfNameComplex(zz) 
+
+# Take a look:
+
+zz
+
+# Since 'zz' is a subcomplex of 'yy' we can form a "filtered complex".
+
+yh <- list(yy, zz); names(yh) <- as.character(1:length(yh))
+
+yh
+
+# Remove the objects.
+
+rm(yy, zz, yh)
+
+
+#---------------------------------------------------------------------------
+# 3. PERSISTENT HOMOLOGY AND LOCALIZATION OF 'yh52'.
+#---------------------------------------------------------------------------
+
+# The homology functions described here have been thoroughly tested on numerous, necessarily small, 'data sets', like 'yh52'. Moreover, the main homology computing function has been frequently run on randomly generated simplicial complexes with the results compared to the output of the "homology" function in Sage (http://www.sagemath.org/) run on the same complexes.
+
+# Compute persistent homology of 'yh52'.
+
+dmn <- 1 # (Choose the dimension of interest.)
+
+# "complexToPersist" can be thought of as the work horse function in ConcurrenceTopology. (Or it can be thought of as a wrapper for the true work horse functions.)
+
+# Computing homology can give rise to large, sparse matrices. ConcurrenceTopology uses the "Matrix" library to represent such matrices in a compact form.
+
+library(Matrix)
+
+FP <- complexToPersist(filtration = yh52, dmn = dmn)
+
+# IMPORTANT! For "toy" problems it doesn't make any difference, but for real data the efficient way to use this "complexToPersist" is described in section 5, "USING 'complexToPersist' FOR PRODUCTION WORK", below.
+
+# Extract persistence.
+
+perss <- FP$persistList;  perss <- perss$persistence
+
+# If you just want persistent homology in dimension "dmn", then "perss" is all you need. But suppose you want to localize. Then first, extract homology.
+
+homolo <- FP$homolList
+
+# Choose a frequency level in which to localize.
+
+freqLev <- "3"
+
+# Localize.
+
+homlo <- homolo[[freqLev]]; vertList <- yh52[[freqLev]]
+ 
+sac <- find.shortest.abs.cycles(dimension = dmn, returnCycles = TRUE, Xone = NULL, bmrLoSimps = NULL, freqLev = freqLev, homolList = homlo, persistList = perss, vertexList = unique(unlist(lapply(vertList, names))), lifespan.cutoff = 1, howOften = 2, verbose = 1, let.it.all.hang.out = FALSE)
+
+# The output:
+
+sac
+# $dimension
+# [1] 1
+# 
+# $freqLev
+# [1] "3"
+# 
+# $lifeSpanCutoff <-- Indicates that ALL cycles were localized. 
+# [1] 1
+# 
+# $lifespans
+# cycle.3.4 cycle.3.3 cycle.3.2 cycle.3.1 
+#         0         0         0         3 
+# [Comment: There are four holes (homology classes; "freq. lev. 3" in the figure "filtration_yh52.pdf"). Three of them were "born" at higher frequency levels. They're indicated by "0" lifespan. But one class, with a lifespan of 3, is born at this frequency level, "3".]
+# 
+# $relative.cycles
+# $relative.cycles$cycle.3.4
+# $relative.cycles$cycle.3.4$`6.7`
+# [1] "6" "7"			 <-- Pieces of cycles.
+# 
+# 
+# $relative.cycles$cycle.3.3
+# $relative.cycles$cycle.3.3$`1.6`
+# [1] "1" "6"
+# 
+# 
+# $relative.cycles$cycle.3.2
+# $relative.cycles$cycle.3.2$`1.7`
+# [1] "1" "7"
+# 
+# 
+# $relative.cycles$cycle.3.1
+# $relative.cycles$cycle.3.1$`3.7`
+# [1] "3" "7"
+# 
+# 
+# 
+# $short.cycles
+# $short.cycles[[1]]
+# $short.cycles[[1]]$class
+# [1] "cycle.3.1"
+# 
+# $short.cycles[[1]]$shrt.cyc
+# [1] "3" "7" "2"      <- This stands for the short 1-cycle "3.7+3.2+7.2", where, e.g., "3.7" is the line segment connecting vertex "3" to vertex "7".
+# 
+# 
+# $short.cycles[[2]]
+# $short.cycles[[2]]$class
+# [1] "cycle.3.4" "cycle.3.3" "cycle.3.2" <-- This hole is the "sum" of 3 holes.
+# 
+# $short.cycles[[2]]$shrt.cyc
+# [1] "6" "7" "1"
+# 
+# 
+# $short.cycles[[3]]
+# $short.cycles[[3]]$class
+# [1] "cycle.3.2"
+# 
+# $short.cycles[[3]]$shrt.cyc
+# [1] "1" "7" "2"
+
+
+# There are four holes, but only 3 short cycles ("3" "7" "2" , "6" "7" "1", and "1" "7" "2"). The fourth hole, with vertices "6", "7", "3", and "5", isn't surrounded by a short cycle. 
+
+# Next, compute the Euler characteristic, a single number summary of the homology of a shape (Munkres, 1984, "Elements of Algebraic Topology", p. 124 and  Richeson, 2008, Euler's Gem: The Polyhedron Formula and the Birth of Topology"), of "yh52" in all frequency levels.
+
+sapply(yh52, eulerNumber)
+#  1  2  3  4  5  6  7  8 <-- frequency level
+# -3 -4 -3 -2 -2  1  2  1 <-- Euler characteristic
+
+
+#---------------------------------------------------------------------------
+# 4. STARTING WITH A CONCURRENCE LIST
+#---------------------------------------------------------------------------
+
+"yh52" is a filtered complex. In analyzing data one starts instead with a concurrence list. As an example, consider this data set:
+
+bauble2
+ #      v w x y z 
+ #  2   0 0 0 0 0 
+ #  4   0 0 0 0 1 
+ #  6   0 0 0 1 0 
+ #  8   0 0 1 0 0 
+ #  10  0 0 0 1 1 
+ #  12  0 0 1 0 1 
+ #  14  0 0 1 1 0 
+ #  16  0 0 1 1 1 
+ #  9   1 0 0 0 1 
+ #  101 0 1 1 0 0 
+ #  11  1 1 0 0 0
+
+# (The vertical list "2, 4, 6, 8", etc on the left is not a data column. Those symbols are the "row names". Row names can be useful, but not here. Just ignore them.)
+
+# The list of concurrences for 'bauble2' is
+
+concur <- list("Z", "Y", "X", c("Y", "Z"), c("X", "Z"), c("X", "Y"), c("X", "Y", "Z"), c("V", "Z"), c("W", "X"), c("V", "W"))
+
+# Things often go more smoothly (i.e., correctly) if the vertices are named. An easy way to do this is
+
+concur <- selfNameComplex(concur)
+
+# So, e.g.,
+
+concur[[7]]
+#   X   Y   Z 
+# "X" "Y" "Z"
+
+# Now compute persistence. For variety, do so in dimension 0
+
+dmn <- 0 
+
+# Since "concur" is not a filtered complex, use the "cmplx" argument of 'complexToPersist'. (That argument should probably be called "concurList" or something like that.)
+
+# If you haven't already, attach the "Matrix" library.
+
+library(Matrix)
+
+FP <- complexToPersist(cmplx = concur, dmn = dmn)
+
+# Components of "FP":
+
+names(FP)
+# [1] "persistList"    "dimension"      "filtered.cmplx" "homolList"
+
+# "homolList" is a complicated (but very useful) object that beginners needn't concern themselves with. But "filtered.cmplx" is the "Curto-Itskov" complex based on the concurrence list.
+
+FP$filtered.cmplx
+# $`1`
+# $`1`[[1]]
+#   V   Z 
+# "V" "Z" 
+# 
+# $`1`[[2]]
+#   W   X 
+# "W" "X" 
+# 
+# $`1`[[3]]
+#   V   W 
+# "V" "W" 
+# 
+# $`1`[[4]]
+#   X   Y   Z 
+# "X" "Y" "Z" 
+# 
+# 
+# $`2`
+# $`2`[[1]]
+#   Y   Z 
+# "Y" "Z" 
+# 
+# $`2`[[2]]
+#   X   Z 
+# "X" "Z" 
+# 
+# $`2`[[3]]
+#   X   Y 
+# "X" "Y" 
+# 
+# 
+# $`3`
+# $`3`[[1]]
+#   Z 
+# "Z" 
+# 
+# $`3`[[2]]
+#   Y 
+# "Y" 
+# 
+# $`3`[[3]]
+#   X 
+# "X" 
+# 
+# 
+# $`4`
+# $`4`[[1]]
+#   Z 
+# "Z" 
+# 
+# $`4`[[2]]
+#   Y 
+# "Y" 
+# 
+# $`4`[[3]]
+#   X 
+# "X" 
+# 
+# 
+# $`5`
+# $`5`[[1]]
+#   Z 
+# "Z" 
+# 
+# $`5`[[2]]
+#   X 
+# "X" 
+# 
+
+# This Curto-Itskov complex has 5 frames corresponding to the 5 frequency levels. So, e.g., "FP$filtered.cmplx[["2"]]" contains 3 "facets":
+
+FP$filtered.cmplx[["2"]]
+# [[1]]
+#  Y   Z 
+# "Y" "Z" 
+
+# [[2]]
+#  X   Z 
+# "X" "Z" 
+
+# [[3]]
+#  X   Y 
+# "X" "Y"
+
+# The middle row in figure "augmented_toy_filtrations.pdf" portrays this filtered Curto-Itskov complex graphically.
+
+# Let's look at the persistent homology in dimension 0.
+
+perss <- FP$persistList;  perss <- perss$persistence
+
+# E.g., in frequency level "4":
+
+perss[["4"]]
+# $birth
+# [1] "4"
+# 
+# $lifespans
+#                           from.acyclic 
+#            2            0            0 
+## [Thus, there are three clusters in this frequency level ("4"). Two of them had already been "born" at a higher frequency level. 
+## Those previously born are assigned lifespans of "0". But a new cluster appears at this frequency level. It has a lifespan of 2 frequency levels. Don't worry about "from.acyclic".]
+# 
+# $cycles # (These are "relative cycles". That explains absence of "X".)
+# $cycles[[1]]
+# $cycles[[1]]$Y
+# [1] "Y"
+# 
+# 
+# $cycles[[2]]
+# $cycles[[2]]$Z
+# [1] "Z"
+# 
+# 
+# 
+# $which.is.from.acyc  <-- Don't worry about this.
+# [1] NA
+# 
+# $coroners.rpt  <-- Don't worry about this.
+# $coroners.rpt$Y
+# list()
+# 
+# $coroners.rpt$Z  <-- Don't worry about this.
+# [1] "Fogey"
+
+# Let's make a persistence plot for these data in dimension 0. To do this use a function called "BirthAndDeathProcess". Unfortunately "BirthAndDeathProcess" expects a list of persistence lists indexed by subject label. Put the persistence in the appropriate form to fool the function.
+
+x <- list(FP$persistList)
+names(x) <- "bauble2"
+
+xbd <- BirthAndDeathProcess(subid = "bauble2", persistList = x, absolute = TRUE)
+
+# This produces a list of birth-death pairs: 
+
+xbd
+# [[1]]
+# [1] 4 2
+
+# [[2]]
+# [1] 5 2
+
+# $from.acyclic <-- This is a technical attribute of the pair (5,0). Don't worry about it.
+# [1] 5 0
+
+# For plotting 'xbd' a little inconvenient. Turn the output into a matrix.
+
+xbd <- PlistToPmat(xbd)
+
+xbd
+#              x y
+#              4 2
+#              5 2
+# from.acyclic 5 0  <-- Again, don't worry about "from.acyclic".
+
+# Now make a plot.
+
+( y <- max(xbd[, "x"]) )
+# 5
+
+plot(xbd[, "x"], xbd[, "y"], xlab = "birth", ylab = "death", xlim = c(0,y), ylim = c(0,y))
+
+abline(a = 0, b = 1)
+
+title("Persistence plot for data set 'bauble2' in dimension 0")
+
+#  This procedure works for persistence in any dimension. See section 6, "A PRODUCTION RUN WITH REAL fMRI DATA", for a "real life" example.
+
+# The function 'find.shortest.abs.cycles' that we used in section 3 doesn't work in dimension 0. The 0-dimensional analogue is 'verts.in.connected.components'. Now, 'verts.in.connected.components' is not too useful and needs to be overhauled, but if you want to try it, do the following. 
+
+perss <- FP$persistList
+
+verts.in.connected.components(freqLev = "4", homolList = FP$homolList[["4"]], perss$persistence)
+
+# The output reveals the component, or cluster, "Y" born in frequency level "4" and having a lifespan of 2. (This cluster dies in frequency level "2" when it is swallowed up by the component "X" (or "Z") that is born in frequency level "5".))
+
+#---------------------------------------------------------------------------
+# 5. USING 'complexToPersist' FOR PRODUCTION WORK.
+#---------------------------------------------------------------------------
+
+# The way we have been using 'complexToPersist' works fine for toy examples, but isn't so great for big complexes. That is because as we've been using 'complexToPersist' we compute the "homolList" component from scratch every time. 
+# But "homolList" is hard to compute. For a large data set computing it might literally take days. So try to avoid computing it more than once. Instead, store it and re-use it. 
+
+# Consider the filtered complex 'OfficeBuilding'. It's a representation as a filtered complex of a hypothetical office building with 6 floors. There are holes in the floors due to stairwells/elevator shafts. Persistent homology can detect the stairwells/elevator shafts and count how many floors they span. (The floor space of the building decreases as one goes up, so it's filtered.) Now, the floors of 'OfficeBuilding' aren't conveniently named:
+
+names(OfficeBuilding)
+# [1] "first"  "second" "third"  "fourth" "fifth"  "sixth"
+
+# So make a copy and rename:
+
+yh <- OfficeBuilding; names(yh) <- as.character(1:length(yh))
+
+# The vertices in 'yh' are already named, otherwise you could "self name" them using 'selfNameComplex' as follows.
+
+for(i in 1:length(yh)) {
+yh[[i]] <- selfNameComplex(yh[[i]])
+}
+
+# Compute the persistent homology. Start with the highest dimension you think you might need.
+
+dmn <- 9
+
+# 'yh' doesn't have any homology in dimensions above 1, but the software works even if there is no homology. However, the speed of computation can be greatly affected by the dimension. As a general rule the higher the dimension the longer the computation takes, providing that there are actually simplices of that dimension in the complex. (And the more variables the longer it tends to take, too.) If the computation is taking too long, abort it (with "ctl C") and restart with a lower dimension.
+
+# For production, set the "verbose" argument to 1 in order to observe the progress. (If you haven't already attached the library "Matrix" (see above), do so.)
+
+# Time the process.
+
+system.time( FP <- complexToPersist(filtration = yh, dmn = dmn, verbose = 1) )
+#    user  system elapsed 
+# 105.816   0.173 106.045
+
+# Homology is computed for every "frequency level" (floor). For example 
+# "i = 5       -- complexToPersist" announces that work on "frequency level" (floor) "5" is beginning. 
+# Notice that work on each frequency level starts with "Excizing." Excising is a preliminary step meant to speed up subsequent steps by amalgamating a bunch of big simplices that can be ignored. 
+# But sometimes excising itself takes too long. The argument "TRIES" tells 'complexToPersist' how much effort to put into excising. The higher the value of "TRIES" the more time 'complexToPersist' will spend excising. TRIES must be a positive integer or infinity, 'Inf'. The default value of "TRIES" is 4.
+
+# If the program is spending too much time excising (we regard one day as too much time for excising) then try lower values of "TRIES". That will slow down later phases of the computation, but it seems to be well worth it.
+
+# For example, one can try
+
+system.time( FP <- complexToPersist(filtration = yh, dmn = dmn, TRIES = 1, verbose = 1) )
+
+# This takes about the same amount of time as before ("TRIES = 4"). "TRIES = Inf" also takes about the same amount of time, but with bigger problems the value of "TRIES" can be important.
+
+# To make things go more quickly in subsequent homology calculations for 'OfficeBuilding', grab the homology list:
+
+homolo <- FP$homolList
+
+# Try again, but now we can skip the computation of the homology part. (If "HomolList" is supplied then there is no excising so "TRIES" plays no role in the computation.)
+
+system.time( FP <- complexToPersist(filtration = yh, dmn = dmn, HomolList =  homolo, verbose = 1) )
+#    user  system elapsed 
+#   0.367   0.001   0.367
+
+# (For less in the way of progress reports from the software set "verbose = 0".)
+
+# 'homolo' is a list with one component for each frequency level. One of the many components in each component of 'homolo' is a vector of "Betti numbers", essentially the counts of the number of holes in each dimension:
+
+sapply( homolo, project, d = "BettiNumbers")
+ #    1 2 3 4 5 6 
+ #  0 1 1 1 1 1 1 
+ #  1 2 2 3 3 2 1 
+ #  2 0 0 0 0 0 0 
+ #  3 0 0 0 0 0 0 
+ #  4 0 0 0 0 0 0 
+ #  5 0 0 0 0 0 0 
+ #  6 0 0 0 0 0 0 
+ #  7 0 0 0 0 0 0 
+ #  8 0 0 0 0 0 0 
+ #  9 0 0 0 0 0 0
+
+# In the preceding, the columns are "frequency levels" (floors) and the rows are the dimensions. (Columns are labeled "1" through "6", dimensions "0" through "9" (row names again).) You see that there's no homology in dimensions larger than 1. You can see also that, e.g., 3 stairwells/elevator shafts penetrate floor 3.
+
+# Probably you want to compute the persistent homology for every dimension no greater than 'dmn'. First, create a list to hold everything.
+
+OfficeBldgPersistence <- as.list(1:(dmn+1))
+names(OfficeBldgPersistence) <- as.character(0:dmn)
+
+# We've already computed persistent homology for dimension 'dmn':
+
+OfficeBldgPersistence[[as.character(dmn)]] <- FP$persistList
+
+# Compute for lower dimensions. (Indices in R start at 1, but dimension starts at 0.)
+
+system.time(
+for(i in 0:(dmn-1)) {
+FP <- complexToPersist(filtration = yh, dmn = i, HomolList =  homolo, verbose = 1)
+OfficeBldgPersistence[[i+1]] <- FP$persistList
+}
+    )
+#    user  system elapsed 
+#   9.358   0.039   9.410
+
+# Localize in dimension 1 and, say, floor 3.
+
+dmn <- 1
+
+homolo <- FP$homolList
+
+freqLev <- "3"
+
+perss <- OfficeBldgPersistence[[as.character(dmn)]];  perss <- perss$persistence 
+
+# ('OfficeBldgPersistence' is indexed by "0" "1" "2" "3" "4", etc. Thus, to get dimension 1 we need to select, not the first component, i.e., component 1, but the component named "1". The distinction between the integer 1 and the character string "1" is important here.)
+
+homlo <- homolo[[freqLev]]; vertList <- yh[[freqLev]]
+ 
+sac <- find.shortest.abs.cycles(dimension = dmn, returnCycles = TRUE, Xone = NULL, bmrLoSimps = NULL, freqLev = freqLev, homolList = homlo, persistList = perss, vertexList = unique(unlist(lapply(vertList, names))), lifespan.cutoff = 1, howOften = 10, verbose = 1, let.it.all.hang.out = FALSE)
+
+# ('find.shortest.abs.cycles' can be slow. One can speed it up by running it in parallel, but we don't explain that "advanced topic" here. The argument "howOften" tells the program how often to report its progress: "Just let me ..." For big jobs one may wish to set "howOften" to something larger.)
+
+# The third floor has three holes (all born on higher floors) in it:
+
+sac$lifespans
+# cycle.3.3 cycle.3.2 cycle.3.1 
+#         0         0         0
+
+# But there are no short cycles:
+
+sac$short.cycles
+# list()
+
+# No short cycles because the holes are rectangular, i.e., bound by four 1-simplices. A short 1-cycle is bound by three 1-simplices.
+
+# Tidy up by removing things you don't want to save:
+
+rm(FP, xbd, x,y, perss, homolo, freqLev, homlo, sac, concur, dmn, OfficeBldgPersistence, yh, i, vertList)
+
+# But it you want to save (in a file called ".RData") something, then don't remove it. Instead, type:
+
+save.image()
+
+# To quit, type
+
+q()
+
+# This will also give you another opportuntity to save your work in ".RData".
+
+
+#---------------------------------------------------------------------------
+# 6. A PRODUCTION RUN WITH REAL fMRI DATA.
+#---------------------------------------------------------------------------
+
+# Use these tools to analyze a research subject's resting state fMRI data. First, read in the data.
+
+X <- read.table("../fMRI_data/sub20691_BOLDfMRI.csv", header = FALSE, sep = ",", row.names = NULL)
+
+# ("sub20691" is an ADHD subject.) Change 'X' from "data.frame" to "matrix".
+
+X <- as.matrix(X)
+
+dim(X)
+# [1]  92 193
+
+# 92 rows (each corresponding to a region). 193 columns. The first column gives the region name, the rest are BOLD values. The columns after the first correspond to time points.
+
+# Extact the variable, i.e., region, names are in the first column.
+
+rnames <- as.character( X[,1] )
+
+# Then drop the first column.
+
+X <- X[,-1]
+
+# In this example, we only use regions in the "default mode network (DMN)" (see the file "../fMRI_data/FreeSurferRegions" for details). 
+
+# (If instead you wish to analyze all 92 regions in the whole brain skip down to "***".)
+
+# 'unDefMode' contains the regions NOT in the DMN.
+
+w <- match(unDefMode, rnames)
+
+# Drop the regions in 'unDefMode'.
+
+w <- w[!is.na(w)] # 'w' indices the regions NOT in the DMN.
+X <- X[-w,]
+rnames <- rnames[-w]
+
+# In our interpretation, there are 40 regions in the DMN.
+
+dim(X)
+# [1]  40 192
+
+length(rnames)
+# [1] 40
+
+# ***
+
+dimnames(X) <- list(rnames, NULL) # We use the rownames in 'X' to indicate region.
+
+# Select regions based on a robust "coefficient of variation". First, compute the median of each row.
+
+xm <- apply(X, 1, median)
+
+summary(xm)
+#    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+#  447.5   662.9   733.1   715.4   771.1   847.7
+
+# Next, compute the interquartile range of each row.
+
+xq <- apply(X, 1, IQR)  
+
+summary(xq)
+#    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+#   2.273   3.572   4.256   4.291   4.990   7.055
+
+# "Robust coef. of variation:"
+
+CV <- xq/xm
+
+summary(CV)
+#     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+# 0.003102 0.005111 0.005693 0.006076 0.007087 0.010930
+
+# Pick regions with biggest values of 'CV'.
+
+w <- order(CV)
+w <- rev(w)
+
+# 'w' indexes 'CV' in decreasing order.
+
+# Use the 80% with the largest values of 'CV':
+
+( rn <- 0.80 * dim(X)[1] )
+# 32
+
+w <- w[1:rn]
+
+X <- X[w,]
+
+# Dichotomize and create a concurrence list. For each region define the timepoints at which the region is "active" to be the 20% with the highest BOLD values.
+
+CL <- BOLD.to.Complex(X, threshold = 0.80, comment = "subject sub20691; DMN") 
+
+length(CL)
+# [1] 173
+
+# So 'CL' contains 173 concurrences. Compute their lengths.
+
+x <- sapply(CL, length)
+
+summary(x)
+#    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+#   1.000   3.000   6.000   7.214  10.000  29.000
+
+# The vertices in 'CL' inherited the row names from 'X'. E.g., 
+
+CL[[13]]
+# 2019 1019 1012 1014 2012 2020 2027 
+#    1    2    3    9   12   16   19
+
+# (The names "2019", etc. are FreeSurfer codes. See the file "FreeSurferRegions.txt" in the folder "ConcurTopol_Supplementary_Material/fMRI_data" for a translation.)
+
+# There are 32 regions in 'X'. At least once, 29 of the 32 regions were active at the same time.
+
+# Now compute persistent homology in dimensions 0 through 5. Try "TRIES = 4" (which happens to be the default value).
+
+dmn <- 5
+
+system.time( FP <- complexToPersist(cmplx = CL, dmn = dmn, TRIES = 4, verbose = 1) )
+#    user  system elapsed 
+# 380.028   0.561 381.006
+
+# Luckily for us this went VERY fast. Now grab the homology list:
+
+homolo <- FP$homolList
+
+# And the filtration.
+
+Filt <- FP$filtered.cmplx
+
+length(Filt)
+# 39
+
+# 39 frequency levels.
+
+# For the heck of it, make sure 'Filt' is "filtered" (in our sense, the reverse of the standard sense), i.e. every simplex in a "frame" is in the previous frame or is a face of a simplex in the previous frame. (We have never known the "filtered.cmplx" to not be filtered, so this isn't an essential step.)
+
+x <- rep(NA, length(Filt))
+
+for(i in 2:length(Filt)) {
+x[i] <- subCmplx( Filt[[i]], Filt[[i-1]] )
+}
+
+all(x[-1]) # (The first position wasn't filled.)
+# [1] TRUE
+
+# So 'Filt' is filtered.
+
+# Take a look at the Betti numbers.
+
+lbsr( sapply( homolo[1:18], project, d = "BettiNumbers") )
+ #    1 2  3 4  5  6  7 8 9 10 11 12 13 14 15 16 17 18 
+ #  0 1 1  1 1  1  1  1 2 2  2  2  2  2  5  8 11 11 11 
+ #  1 0 1  1 9 13 14 11 8 4  2  2  2  2  1  1  0  0  0 
+ #  2 0 5 14 7  1  0  0 0 0  0  0  0  0  0  0  0  0  0 
+ #  3 4 4  0 0  0  0  0 0 0  0  0  0  0  0  0  0  0  0 
+ #  4 2 5  0 0  0  0  0 0 0  0  0  0  0  0  0  0  0  0 
+ #  5 0 0  0 0  0  0  0 0 0  0  0  0  0  0  0  0  0  0
+
+# (Again: Rows are dimensions: 0--5. Columns are frequency levels. We just went out to frequency level 18 because the Betti numbers are pretty boring after that.)
+# This subject has nontrivial homology in dimensions up to 4 in frequency levels 1 and 2. Also, there's nontrivial homology in dimension 1 all the way out to frequency level 15. An interesting subject, homologically speaking. In dimension 0, the Betti numbers start at a value of 1, which means the complex is connected, but at frequency level "8" the complex starts breaking up.
+
+# Now compute persistence for the dimensions < 5. First, create a list to hold everything.
+
+sub20691.persistence <- as.list(1:(dmn+1))
+names(sub20691.persistence) <- as.character(0:dmn)
+
+# We've already computed persistent homology for dimension 'dmn'. (We already know that there's no persistence in dimension 5 because there's no homology.)
+
+sub20691.persistence[[as.character(dmn)]] <- FP$persistList
+
+# Compute for lower dimensions.
+
+system.time(
+for(i in 0:(dmn-1)) {
+cat("\n Computing persistence in dimension", i, "\n")
+FP <- complexToPersist(filtration = Filt, dmn = i, HomolList =  homolo, verbose = 1)
+sub20691.persistence[[i+1]] <- FP$persistList
+}
+    )
+#    user  system elapsed 
+# 147.941   0.269 148.295
+
+# Again, very fast.
+
+# Make a persistence plot in dimension 2.
+
+x <- list(sub20691.persistence[["2"]])
+names(x) <- "sub20691"
+
+xbd <- BirthAndDeathProcess(subid = "sub20691", persistList = x, absolute = TRUE)
+
+xbd <- PlistToPmat(xbd) 
+
+dim(xbd)
+# [1] 24  2
+
+# 24 persistent classes. Should make an interesting plot.
+
+( y <- max(xbd[, "x"]) )
+# 5
+
+# There are many repeated rows in 'xbd', corresponding to multiple persistent classes with the same birth and death frequency levels. "Jitter" to resolve them.
+
+plot(jitter(xbd[, "x"]), jitter(xbd[, "y"]), xlab = "birth", ylab = "death", xlim = c(0,y), ylim = c(0,y))
+
+abline(a = 0, b = 1)
+
+title("Persistence plot for subject 'sub20691' in dimension 2")
+
+# Create an object that contains all the homological information about "sub20691" that we've accumulated so far.
+
+sub20691.PersistentHomology <- list(comment = paste("sub20691; DMN, dimensions 0--5;", date()), persistence.list = sub20691.persistence, filtration = Filt, homology.list = homolo)
+
+# We might want to save this object to a file:
+
+save(sub20691.PersistentHomology, file = "sub20691.PersistHomol.RData")
+
+# Localize in dimension 1 and, say, frequency level 6, where the dimension 1 Betti number is highest.
+
+dmn <- 1
+
+freqLev <- "6"
+
+perss <- sub20691.persistence[[as.character(dmn)]];  perss <- perss$persistence
+
+homlo <- homolo[[freqLev]]; vertList <- Filt[[freqLev]]
+ 
+system.time(
+sac <- find.shortest.abs.cycles(dimension = dmn, returnCycles = TRUE, Xone = NULL, bmrLoSimps = NULL, freqLev = freqLev, homolList = homlo, persistList = perss, vertexList = unique(unlist(lapply(vertList, names))), lifespan.cutoff = 1, howOften = 10, verbose = 1, let.it.all.hang.out = FALSE)
+ )
+#    user  system elapsed 
+#  27.258   0.035  27.321
+
+# Localization can take a long time, but once again we're lucky.
+
+length(sac$short.cycles)
+[1] 65
+
+# 65 short cycles. Here are the first two:
+
+sac$short.cycles[1:2]
+ #  [[1]] 
+ #  [[1]]$class 
+ #  [1] "cycle.6.6" 
+ #   
+ #  [[1]]$shrt.cyc 
+ #  [1] "1008" "1023" "2009" 
+ #   
+ #   
+ #  [[2]] 
+ #  [[2]]$class 
+ #  [1] "cycle.6.14" "cycle.6.2"  
+ # [This short cycle represents a homology class that's the sum of the classes "cycle.6.14" "cycle.6.2".]
+ #   
+ #  [[2]]$shrt.cyc 
+ #  [1] "1020" "2020" "1002"
+
+# In practice one would probably do the preceding calculation for all frequency levels and all dimensions then store them away.
+
+# Clean up.
+
+rm(sub20691.PersistentHomology, sac, Filt, homolo, homlo, dmn, CL, X, w, CV, xq, xm, rnames, freqLev, perss, x, y, xbd, sub20691.persistence, vertList, rn, FP, i)
+
+
